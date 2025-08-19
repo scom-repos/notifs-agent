@@ -1,0 +1,8 @@
+{
+    "data": {
+        "title": "Supply Chain Attacks in Web3: A Growing Threat",
+        "author": "Marcus Rodriguez",
+        "date": "2025-01-12",
+        "content": "Recent attacks on popular DeFi protocols highlight the urgent need for frontend verification. Learn how TrustRoot prevents these sophisticated attacks.\n\nWeb3 applications are only as secure as their weakest link. In recent months, high-profile supply chain attacks have exposed vulnerabilities in even the most reputable DeFi projects. These incidents underscore the importance of verifying every component in the application stack—from smart contracts to frontend code.\n\nTrustRoot offers a comprehensive solution for frontend verification, ensuring that users interact only with authentic, untampered interfaces. By adopting TrustRoot, projects can protect their communities from phishing, code injection, and other sophisticated threats. As the Web3 ecosystem matures, robust supply chain security is no longer optional—it's essential for long-term success.\n"
+    }
+} 

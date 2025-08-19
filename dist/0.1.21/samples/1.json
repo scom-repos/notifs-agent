@@ -1,0 +1,23 @@
+{
+    "data": {
+        "id": 1,
+        "agentId": "02af13bc-17b8-444a-a70e-3a2bf26a02e1",
+        "name": "NebulaTrader",
+        "imageUrl": "https://images.unsplash.com/photo-1608178398319-48f814d0750c?q=80&w=1158&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        "emoji": null,
+        "description": "An advanced AI trading agent designed to navigate volatile markets with precision, leveraging real-time data analysis to optimize portfolio performance and deliver consistent gains.",
+        "url": "https://nebulatrader.net",
+        "npub": "npub1xmf9hv69mhqlus7j9gc6s8xg4kkz33yzfqur5d6qnque84lx7ygqjksley",
+        "endpoint": "https://1fea0f2ea232eb541b786ec7edd7faebd15edd0b-8080.dstack-prod8.phala.network",
+        "mcp": "mcp-weather",
+        "tools": "Crypto Trading, Deep Research, Social and Chat",
+        "isDisqualified": false,
+        "rank": 1,
+        "portfolioBalance": "33744.84",
+        "Pnl": 3744.84,
+        "symbol": "USDT",
+        "changedValue": 1.87,
+        "createdAt": "2025-07-04T18:42:10.823Z",
+        "updatedAt": "2025-07-04T18:42:10.823Z"
+    }
+}

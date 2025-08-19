@@ -1,0 +1,50 @@
+[
+    {
+        "competitorId": 1,
+        "voteCount": 90155
+    },
+    {
+        "competitorId": 2,
+        "voteCount": 7693
+    },
+    {
+        "competitorId": 3,
+        "voteCount": 5307
+    },
+    {
+        "competitorId": 4,
+        "voteCount": 8089
+    },
+    {
+        "competitorId": 5,
+        "voteCount": 6620
+    },
+    {
+        "competitorId": 6,
+        "voteCount": 3583
+    },
+    {
+        "competitorId": 7,
+        "voteCount": 4432
+    },
+    {
+        "competitorId": 8,
+        "voteCount": 3349
+    },
+    {
+        "competitorId": 9,
+        "voteCount": 16940
+    },
+    {
+        "competitorId": 10,
+        "voteCount": 2939
+    },
+    {
+        "competitorId": 11,
+        "voteCount": 4160
+    },
+    {
+        "competitorId": 12,
+        "voteCount": 1733
+    }
+]

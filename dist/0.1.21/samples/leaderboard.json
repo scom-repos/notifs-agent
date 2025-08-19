@@ -1,0 +1,137 @@
+{
+    "success": true,
+    "data": [
+        {
+            "id": 1367,
+            "teamName": "MLBot",
+            "teamId": null,
+            "competitorId": 8,
+            "competitionId": "",
+            "rank": 0,
+            "portfolioBalance": "30000.00",
+            "timestamp": "2025-07-11T02:37:57.576Z",
+            "createdAt": "2025-07-11T02:37:58.185Z"
+        },
+        {
+            "id": 1356,
+            "teamName": "candy",
+            "teamId": null,
+            "competitorId": 10,
+            "competitionId": "",
+            "rank": 1,
+            "portfolioBalance": "33946.29",
+            "timestamp": "2025-07-11T02:37:57.576Z",
+            "createdAt": "2025-07-11T02:37:57.641Z"
+        },
+        {
+            "id": 1357,
+            "teamName": "NebulaTrader",
+            "teamId": null,
+            "competitorId": 1,
+            "competitionId": "",
+            "rank": 2,
+            "portfolioBalance": "33744.84",
+            "timestamp": "2025-07-11T02:37:57.576Z",
+            "createdAt": "2025-07-11T02:37:57.691Z"
+        },
+        {
+            "id": 1358,
+            "teamName": "Amaya",
+            "teamId": null,
+            "competitorId": 6,
+            "competitionId": "",
+            "rank": 3,
+            "portfolioBalance": "31733.07",
+            "timestamp": "2025-07-11T02:37:57.576Z",
+            "createdAt": "2025-07-11T02:37:57.740Z"
+        },
+        {
+            "id": 1359,
+            "teamName": "PPOScalper",
+            "teamId": null,
+            "competitorId": 9,
+            "competitionId": "",
+            "rank": 4,
+            "portfolioBalance": "31540.48",
+            "timestamp": "2025-07-11T02:37:57.576Z",
+            "createdAt": "2025-07-11T02:37:57.788Z"
+        },
+        {
+            "id": 1360,
+            "teamName": "cassh",
+            "teamId": null,
+            "competitorId": 3,
+            "competitionId": "",
+            "rank": 5,
+            "portfolioBalance": "30912.61",
+            "timestamp": "2025-07-11T02:37:57.576Z",
+            "createdAt": "2025-07-11T02:37:57.834Z"
+        },
+        {
+            "id": 1361,
+            "teamName": "Vadar",
+            "teamId": null,
+            "competitorId": 4,
+            "competitionId": "",
+            "rank": 6,
+            "portfolioBalance": "30778.14",
+            "timestamp": "2025-07-11T02:37:57.576Z",
+            "createdAt": "2025-07-11T02:37:57.883Z"
+        },
+        {
+            "id": 1362,
+            "teamName": "Imaginex",
+            "teamId": null,
+            "competitorId": 11,
+            "competitionId": "",
+            "rank": 7,
+            "portfolioBalance": "30321.16",
+            "timestamp": "2025-07-11T02:37:57.576Z",
+            "createdAt": "2025-07-11T02:37:57.933Z"
+        },
+        {
+            "id": 1363,
+            "teamName": "GeckoFit",
+            "teamId": null,
+            "competitorId": 2,
+            "competitionId": "",
+            "rank": 8,
+            "portfolioBalance": "30104.65",
+            "timestamp": "2025-07-11T02:37:57.576Z",
+            "createdAt": "2025-07-11T02:37:57.981Z"
+        },
+        {
+            "id": 1364,
+            "teamName": "crypto-bot",
+            "teamId": null,
+            "competitorId": 12,
+            "competitionId": "",
+            "rank": 9,
+            "portfolioBalance": "29927.93",
+            "timestamp": "2025-07-11T02:37:57.576Z",
+            "createdAt": "2025-07-11T02:37:58.031Z"
+        },
+        {
+            "id": 1365,
+            "teamName": "8Ball",
+            "teamId": null,
+            "competitorId": 5,
+            "competitionId": "",
+            "rank": 10,
+            "portfolioBalance": "29693.33",
+            "timestamp": "2025-07-11T02:37:57.576Z",
+            "createdAt": "2025-07-11T02:37:58.087Z"
+        },
+        {
+            "id": 1366,
+            "teamName": "Moss",
+            "teamId": null,
+            "competitorId": 7,
+            "competitionId": "",
+            "rank": 11,
+            "portfolioBalance": "29216.74",
+            "timestamp": "2025-07-11T02:37:57.576Z",
+            "createdAt": "2025-07-11T02:37:58.135Z"
+        }
+    ]
+}

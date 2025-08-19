@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradingView Chart Widget</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #131722;
+            color: #d1d4dc;
+            overflow: hidden;
+        }
+        
+        .chart-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .chart-wrapper {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 16px;
+            color: #d1d4dc;
+        }
+        
+        .spinner {
+            border: 2px solid #363c4e;
+            border-top: 2px solid #2962ff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <div class="chart-wrapper">
+            <div id="chart-container" style="width: 100%; height: 100%;"></div>
+        </div>
+    </div>
+
+    <!-- TradingView Charting Library -->
+    <script src="./charting_library/charting_library.standalone.js"></script>
+    
+    <script>
+        // Global variables
+        let widget = null;
+        let currentTheme = 'light';
+        let chartContainer = null;
+        let chartConfig = {};
+        let isInitialized = false;
+        let resetCallback = null;
+        let lastOrder = {
+            from: null,
+            to: null,
+            total: null,
+            page: null,
+            maxPage: 0
+        }
+        let nowBarTime = null;
+
+        const resolutionToSeconds = {
+            '1': 60,
+            '5': 300,
+            '15': 900,
+            '30': 1800,
+            '60': 3600,
+            '240': 14400,
+            '1D': 86400,
+            '7D': 604800
+        };
+        
+        // Default configuration
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        const DEFAULT_CONFIG = {
+            // Chart settings
+            symbol: 'ETH',
+            resolution: '5',
+            theme: 'light',
+            locale: 'en',
+            timezone: tz,
+            
+            // Chart features
+            enabled_features: [
+                'hide_right_toolbar'
+            ],
+            disabled_features: [
+                'open_account_manager',
+                'left_toolbar',
+                'header_compare',
+                'header_settings',
+                'header_chart_type',
+                'header_symbol_search',
+                'use_localstorage_for_settings',
+                'header_quick_search'
+            ],
+            
+            // Chart styling
+            overrides: {},
+            
+            // Data settings
+            datafeed: null,
+            supported_resolutions: ['5', '15', '30', '60', '240', '1D', '1W'],
+            
+            // Chart dimensions
+            width: '100%',
+            height: '100%',
+            autosize: true,
+            fullscreen: false,
+            
+            // Additional options
+            library_path: './charting_library/',
+            custom_css_url: null,
+            favorites: { intervals: [] },
+            compareSymbols: []
+        };
+        
+        // Theme configurations
+        const themes = {
+            dark: {
+                background: '#131722',
+                gridColor: '#363c4e',
+                textColor: '#d1d4dc',
+                upColor: '#26a69a',
+                downColor: '#ef5350'
+            },
+            light: {
+                background: '#ffffff',
+                gridColor: '#e1e3e6',
+                textColor: '#131722',
+                upColor: '#4caf50',
+                downColor: '#f44336'
+            }
+        };
+        
+        // Chart Widget API
+        window.ChartWidgetAPI = {
+            // Initialize the chart with custom configuration
+            init: function(config = {}) {
+                chartConfig = { ...DEFAULT_CONFIG, ...config };
+                this.applyConfig();
+                initChart();
+            },
+            
+            // Update chart configuration
+            updateConfig: function(newConfig) {
+                chartConfig = { ...chartConfig, ...newConfig };
+                this.applyConfig();
+                
+                if (widget) {
+                    this.recreateChart();
+                }
+            },
+            
+            // Apply configuration to chart
+            applyConfig: function() {
+                // Update theme if changed
+                if (chartConfig.theme !== currentTheme) {
+                    currentTheme = chartConfig.theme;
+                    this.updateTheme();
+                }
+                
+                // Update chart styling
+                this.updateChartStyling();
+            },
+            
+            // Update chart styling based on current theme
+            updateChartStyling: function() {
+                const theme = themes[currentTheme];
+                document.body.style.background = theme.background;
+                document.body.style.color = theme.textColor;
+            },
+            
+            // Change chart symbol
+            setSymbol: function(symbol) {
+                if (widget && widget.chart) {
+                    widget.chart().setSymbol(symbol);
+                    chartConfig.symbol = symbol;
+                }
+            },
+            
+            // Change chart resolution
+            setResolution: function(resolution) {
+                if (widget && widget.chart) {
+                    widget.chart().setResolution(resolution);
+                    chartConfig.resolution = resolution;
+                }
+            },
+            
+            // Change chart theme
+            setTheme: function(theme) {
+                if (themes[theme]) {
+                    chartConfig.theme = theme;
+                    currentTheme = theme;
+                    this.updateTheme();
+                    this.recreateChart();
+                }
+            },
+            
+            // Update theme and recreate chart
+            updateTheme: function() {
+                this.updateChartStyling();
+                
+                // Update chart overrides for new theme
+                const theme = themes[currentTheme];
+                chartConfig.overrides = {
+                    ...chartConfig.overrides,
+                    "paneProperties.background": theme.background,
+                    "paneProperties.vertGridProperties.color": theme.gridColor,
+                    "paneProperties.horzGridProperties.color": theme.gridColor,
+                    "symbolWatermarkProperties.color": theme.gridColor,
+                    "scalesProperties.textColor": theme.textColor,
+                    "mainSeriesProperties.candleStyle.upColor": theme.upColor,
+                    "mainSeriesProperties.candleStyle.downColor": theme.downColor,
+                    "mainSeriesProperties.candleStyle.borderUpColor": theme.upColor,
+                    "mainSeriesProperties.candleStyle.borderDownColor": theme.downColor,
+                    "mainSeriesProperties.candleStyle.wickUpColor": theme.upColor,
+                    "mainSeriesProperties.candleStyle.wickDownColor": theme.downColor
+                };
+            },
+            
+            // Recreate chart with new configuration
+            recreateChart: function() {
+                if (widget) {
+                    widget.remove();
+                    widget = null;
+                }
+                
+                setTimeout(() => {
+                    initChart();
+                }, 100);
+            },
+            
+            // Add custom indicator
+            addIndicator: function(indicatorName, parameters = {}) {
+                if (widget && widget.chart) {
+                    const chart = widget.chart();
+                    return chart.createStudy(indicatorName, false, false, parameters);
+                }
+            },
+            
+            // Remove indicator
+            removeIndicator: function(indicatorId) {
+                if (widget && widget.chart) {
+                    const chart = widget.chart();
+                    chart.removeEntity(indicatorId);
+                }
+            },
+            
+            // Set chart time range
+            setTimeRange: function(from, to) {
+                if (widget && widget.chart) {
+                    const chart = widget.chart();
+                    chart.setVisibleRange({ from, to });
+                }
+            },
+            
+            // Get chart data
+            getChartData: function() {
+                if (widget && widget.chart) {
+                    const chart = widget.chart();
+                    return {
+                        symbol: chart.symbol(),
+                        resolution: chart.resolution(),
+                        timeRange: chart.getVisibleRange(),
+                        data: chart.getData()
+                    };
+                }
+                return null;
+            },
+            
+            // Get current configuration
+            getConfig: function() {
+                return { ...chartConfig };
+            },
+            
+            // Reset to default configuration
+            reset: function() {
+                chartConfig = { ...DEFAULT_CONFIG };
+                this.applyConfig();
+                this.recreateChart();
+            },
+            
+            // Subscribe to chart events
+            on: function(event, callback) {
+                if (widget && widget.chart) {
+                    const chart = widget.chart();
+                    switch (event) {
+                        case 'symbolChanged':
+                            chart.onSymbolChanged().subscribe(null, callback);
+                            break;
+                        case 'resolutionChanged':
+                            chart.onIntervalChanged().subscribe(null, callback);
+                            break;
+                        case 'crosshairMoved':
+                            chart.crosshairMoved().subscribe(null, callback);
+                            break;
+                        case 'chartReady':
+                            if (widget.onChartReady) {
+                                widget.onChartReady(callback);
+                            }
+                            break;
+                    }
+                }
+            },
+            
+            // Set custom datafeed
+            setDatafeed: function(datafeed) {
+                chartConfig.datafeed = datafeed;
+                if (widget) {
+                    this.recreateChart();
+                }
+            },
+            
+            // Update chart styling overrides
+            setStyling: function(overrides) {
+                chartConfig.overrides = { ...chartConfig.overrides, ...overrides };
+                if (widget) {
+                    this.recreateChart();
+                }
+            },
+            
+            // Set chart dimensions
+            setSize: function(width, height) {
+                chartConfig.width = width;
+                chartConfig.height = height;
+                
+                const container = document.getElementById('chart-container');
+                if (container) {
+                    container.style.width = width;
+                    container.style.height = height;
+                }
+                
+                if (widget && widget.resize) {
+                    widget.resize();
+                }
+            },
+            
+            // Enable chart features
+            setEnabledFeatures: function(enabled = []) {
+                chartConfig.enabled_features = enabled;
+                
+                if (widget) {
+                    this.recreateChart();
+                }
+            },
+
+            // Disable chart features
+            setDisabledFeatures: function(disabled = []) {
+                chartConfig.disabled_features = disabled;
+                
+                if (widget) {
+                    this.recreateChart();
+                }
+            },
+            
+            // Set custom CSS
+            setCustomCSS: function(cssUrl) {
+                if (cssUrl && !document.querySelector(`link[href="${cssUrl}"]`)) {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = cssUrl;
+                    document.head.appendChild(link);
+                }
+            }
+        };
+        
+        // Custom datafeed implementation
+        const customDatafeed = {
+            symbols: [],
+            prices: [],
+            resolution: DEFAULT_CONFIG.resolution,
+            oldResolution: '',
+
+            updateResolution: function (newResolution) {
+                if (this.resolution === newResolution) return;
+                this.oldResolution = this.resolution;
+                this.resolution = newResolution === '1W' ? '1W' : '';
+
+                console.log('🔄 updateResolution called: changing from', this.oldResolution, 'to', newResolution);
+
+                Object.keys(this.subscribers).forEach(subscriberUID => {
+                    const pollingInterval = this.subscribers[subscriberUID];
+                    clearInterval(pollingInterval);
+                    delete this.subscribers[subscriberUID];
+                });
+                
+                if (newResolution === '1W' || newResolution === '1D') {
+                    resetCallback?.();
+                }
+            },
+            
+            onReady: function(callback) {
+                this.getTokenPrices().then(() => {
+                    const config = {
+                        supported_resolutions: [...chartConfig.supported_resolutions],
+                        supports_group_request: false,
+                        supports_search: true,
+                        symbols_types: [{ name: 'crypto', value: 'crypto' }]
+                    };
+                    callback(config);
+                });
+            },
+            
+            searchSymbols: function(userInput, exchange, symbolType, onResultReadyCallback) {
+                const result = this.symbols.filter((s) =>
+                    s.symbol.toLowerCase().includes(userInput.toLowerCase())
+                ).map(s => ({
+                    symbol: s.symbol,
+                    full_name: s.symbol,
+                    description: s.description,
+                    exchange: s.symbol.split(':')[0],
+                    ticker: s.symbol,
+                    type: s.type,
+                }));
+                onResultReadyCallback(result);
+            },
+            
+            resolveSymbol: function(symbolName, onSymbolResolvedCallback) {
+                const match = this.symbols.find(s => s.symbol === symbolName) || this.symbols[0];
+                const [exchange, ticker] = symbolName.split(':');
+                
+                onSymbolResolvedCallback({
+                    name: symbolName,
+                    full_name: symbolName,
+                    ticker,
+                    description: match?.description || '',
+                    type: match?.type || 'crypto',
+                    session: '24x7',
+                    exchange,
+                    listed_exchange: exchange,
+                    timezone: 'Etc/UTC',
+                    minmov: 1,
+                    pricescale: 10000,
+                    has_intraday: true,
+                    supported_resolutions: [...chartConfig.supported_resolutions],
+                    volume_precision: 2,
+                    data_status: 'streaming',
+                });
+            },
+            
+            getBars: async function(symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) {
+                try {
+                    const currentResolution = this.resolution || resolution;
+                    const { from, to } = periodParams;
+                    console.log('getBars', new Date(from * 1000).toLocaleString(), new Date(to * 1000).toLocaleString());
+                    const tokenId = this.prices.find((p) => p.symbol === symbolInfo.name)?.id;
+                    
+                    if (!tokenId) {
+                        onErrorCallback(`No token ID for ${symbolInfo.name}`);
+                        return;
+                    }
+                    
+                    const bars = await this.fetchBars(tokenId, from, to, currentResolution);
+                    if (bars.length > 0) {
+                        const lastBar = bars[bars.length - 1];
+                        if (!nowBarTime) {
+                            nowBarTime = lastBar.time;
+                        }
+                    }
+                    onHistoryCallback(bars, { noData: bars.length === 0 });
+                } catch (err) {
+                    console.error('Error fetching bars:', err);
+                    onErrorCallback(err);
+                }
+            },
+            
+            subscribeBars: function(symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback) {
+                const currentResolution = this.resolution || resolution;
+                if (subscriberUID.endsWith('1D') && currentResolution === '1W') {
+                    subscriberUID = subscriberUID.replace('1D', '1W');
+                }
+                // Set up polling for real-time updates
+                resetCallback = onResetCacheNeededCallback;
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const tokenId = this.prices.find((p) => p.symbol === symbolInfo.name)?.id;
+                        if (!tokenId) return;
+                        
+                        const period = resolutionToSeconds[currentResolution] || 60;
+                        const now = Math.floor(Date.now() / 1000);
+                        const from = now - period * 2;
+
+                        console.log('subcribeBars', new Date(from * 1000).toLocaleString(), new Date(now * 1000).toLocaleString());
+                        
+                        const newBars = await this.fetchBars(tokenId, from, now, currentResolution);
+                        if (newBars.length > 0) {
+                            const latestBar = newBars[newBars.length - 1];
+                            onRealtimeCallback(latestBar);
+                        }
+                    } catch (error) {
+                        console.error('Error in real-time polling:', error);
+                    }
+                }, 10000);
+                
+                // Store interval for cleanup
+                this.subscribers = this.subscribers || {};
+                this.subscribers[subscriberUID] = pollInterval;
+            },
+            
+            unsubscribeBars: function(subscriberUID) {
+                if (subscriberUID.endsWith('1D') && this.oldResolution === '1W') {
+                    subscriberUID = subscriberUID.replace('1D', '1W');
+                }
+
+                console.log('unsubscribeBars', subscriberUID, this.oldResolution);
+
+                if (this.subscribers && this.subscribers[subscriberUID]) {
+                    clearInterval(this.subscribers[subscriberUID]);
+                    delete this.subscribers[subscriberUID];
+                }
+            },
+            
+            async getTokenPrices() {
+                try {
+                    const response = await fetch('https://agent-trading.decom.dev/api/token-prices');
+                    const data = await response.json();
+                    this.prices = data?.data || [];
+                    this.symbols = [...this.prices].map((p) => ({ 
+                        symbol: p.symbol, 
+                        description: '', 
+                        type: 'crypto' 
+                    }));
+                } catch (error) {
+                    console.error('Error fetching token prices:', error);
+                    // Fallback to default symbols
+                    this.symbols = [
+                        { symbol: 'ETH:USD', description: 'Ethereum', type: 'crypto' },
+                        { symbol: 'BTC:USD', description: 'Bitcoin', type: 'crypto' }
+                    ];
+                }
+            },
+            
+            async fetchBars(tokenId, from, to, resolution) {
+                try {
+                    const url = new URL(`https://agent-trading.decom.dev/api/prices/${tokenId}`);
+                    url.searchParams.set('from', from);
+                    url.searchParams.set('to', to);
+                    url.searchParams.set('resolution', this.getResolution(resolution));
+                    
+                    const response = await fetch(url.toString());
+                    const data = await response.json();
+                    const bars = data?.data || [];
+                    
+                    return bars.map(bar => ({
+                        ...bar,
+                        time: new Date(bar.time * 1000).getTime()
+                    })).sort((a, b) => a.time - b.time);
+                } catch (error) {
+                    console.error('Error fetching bars:', error);
+                    return [];
+                }
+            },
+            
+            getResolution(resolution) {
+                if (resolution === '1W' || resolution === 'W') return '7D';
+                return resolution;
+            },
+
+            async getOrders(id, from, to, page) {
+                try {
+                    const url = new URL(`https://agent-trading.decom.dev/api/transactions/${id}`);
+                    url.searchParams.set('page', page);
+                    url.searchParams.set('pageSize', 100);
+                    if (from) url.searchParams.set('from', from);
+                    if (to) url.searchParams.set('to', to);
+
+                    const response = await fetch(url.toString());
+                    const data = await response.json();
+                    const result = data?.data || [];
+                    const formattedResult = [...result].map((o) => ({
+                        id: `order-${o.tradeId}-${o.type}`,
+                        symbol: o.symbol,
+                        side: o.type === 'entry' ? 'buy' : 'sell',
+                        qty: parseFloat(o.quantity),
+                        price: parseFloat(o.price),
+                        time: Math.floor(new Date(o.dateTime).getTime() / 1000),
+                        status: o.status
+                    })).sort((a, b) => b.time - a.time);
+                    return { data: formattedResult, total: data.total };
+                } catch (error) {
+                    console.error('Error loading orders:', error);
+                    return { data: [], total: 0 }
+                }
+            }
+        };
+        
+        // Initialize chart
+        function initChart() {
+            if (!window.TradingView) {
+                console.error('TradingView library not available');
+                return;
+            }
+
+            chartContainer = document.getElementById('chart-container');
+            const datafeed = chartConfig.datafeed || customDatafeed;
+            
+            widget = new window.TradingView.widget({
+                container: chartContainer,
+                library_path: chartConfig.library_path,
+                locale: chartConfig.locale,
+                symbol: chartConfig.symbol,
+                interval: chartConfig.resolution,
+                fullscreen: chartConfig.fullscreen,
+                autosize: chartConfig.autosize,
+                theme: chartConfig.theme,
+                datafeed: datafeed,
+                timezone: chartConfig.timezone,
+                
+                enabled_features: chartConfig.enabled_features,
+                disabled_features: chartConfig.disabled_features,
+                
+                overrides: chartConfig.overrides,
+                
+                loading_screen: chartConfig.loading_screen,
+                favorites: chartConfig.favorites
+            });
+            
+            widget.onChartReady(async () => {
+                if (window.ChartWidgetAPI.on) {
+                    window.ChartWidgetAPI.on('chartReady', () => {});
+                }
+                
+                if (!isInitialized) {
+                    isInitialized = true;
+                    notifyParent();
+                }
+
+                const chart = widget.chart();
+
+                chart.onIntervalChanged().subscribe(null, (interval) => {
+                    datafeed?.updateResolution(interval);
+                });
+
+                if (chartConfig.orderId) {
+                    const { from, to } = chart.getVisibleRange();
+                    drawShapes(from, to, datafeed?.getOrders);
+                }
+
+                chart.onVisibleRangeChanged().subscribe(null, async (range) => {
+                    const { from, to } = range;
+                    if (chartConfig.orderId)
+                        drawShapes(from, to, datafeed?.getOrders);
+                });
+
+                setTimeout(() => {
+                    widget.activeChart().clearMarks();
+                }, 1000);
+            });
+        }
+        
+        // Handle iframe communication
+        function handleMessage(event) {
+            if (event.data && event.data.type === 'chart-action') {
+                switch (event.data.action) {
+                    case 'changeSymbol':
+                        window.ChartWidgetAPI.setSymbol(event.data.symbol);
+                        break;
+                    case 'changeResolution':
+                        window.ChartWidgetAPI.setResolution(event.data.resolution);
+                        break;
+                    case 'changeTheme':
+                        window.ChartWidgetAPI.setTheme(event.data.theme || 'light');
+                        break;
+                    case 'updateConfig':
+                        window.ChartWidgetAPI.updateConfig(event.data.config);
+                        break;
+                    case 'setStyling':
+                        window.ChartWidgetAPI.setStyling(event.data.overrides);
+                        break;
+                    case 'setSize':
+                        window.ChartWidgetAPI.setSize(event.data.width, event.data.height);
+                        break;
+                    case 'addIndicator':
+                        window.ChartWidgetAPI.addIndicator(event.data.name, event.data.parameters);
+                        break;
+                    case 'getConfig':
+                        event.source.postMessage({
+                            type: 'chart-config-response',
+                            config: window.ChartWidgetAPI.getConfig()
+                        }, '*');
+                        break;
+                    case 'getChartData':
+                        event.source.postMessage({
+                            type: 'chart-data-response',
+                            data: window.ChartWidgetAPI.getChartData()
+                        }, '*');
+                        break;
+                }
+            }
+        }
+
+        async function drawShapes(from, to, getOrders) {
+            if (!widget?.chart || !getOrders) return;
+
+            try {
+                const newFrom = new Date(from * 1000).setHours(0, 0, 0, 0);
+                const newTo = new Date(to * 1000).setHours(0, 0, 0, 0);
+
+                const oldFrom = lastOrder.from;
+                lastOrder.to = newTo;
+                if (!lastOrder.maxPage && lastOrder.total)
+                    lastOrder.maxPage = Math.ceil(lastOrder.total / 100);
+
+                if (!oldFrom || (newFrom < oldFrom)) {
+                    if (!lastOrder.page) lastOrder.page = 1;
+                    else {
+                        lastOrder.page = Number(lastOrder.page || 0);
+                        lastOrder.page += 1;
+                    }
+                    lastOrder.from = newFrom;
+                    if (!lastOrder.maxPage || lastOrder.page <= lastOrder.maxPage) {
+                        const { data, total } = await getOrders(chartConfig.orderId, newFrom, oldFrom || newTo, lastOrder.page);
+                        lastOrder.total = total;
+                        await drawExecutionShapes(widget, data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error drawing execution shapes:', error);
+            }
+        }
+
+        async function drawExecutionShapes(widget, orders) {
+            const chart = widget.chart();
+
+            if (!chart) return;
+
+            for (const order of orders) {
+                if ((order.time * 1000) > nowBarTime) continue;
+                const isBuy = order.side === 'buy';
+                const shape = await chart.createExecutionShape();
+                shape
+                    .setTooltip(`${isBuy ? "Bought" : "Sold"} ${order.qty} ${order.symbol} at $${parseFloat(order.price).toFixed(2)}`)
+                    .setDirection(isBuy ? "buy" : "sell")
+                    .setArrowHeight(16)
+                    .setArrowSpacing(0)
+                    .setTime(order.time)
+                    .setPrice(order.price)
+                    .setArrowColor(isBuy ? "#2962ff" : "#eab308")
+            }
+        }
+
+        // Listen for messages from parent window
+        window.addEventListener('message', handleMessage);
+        
+        // Send ready message to parent
+        function notifyParent() {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'chart-widget-ready',
+                    widget: 'tradingview-chart',
+                    api: 'ChartWidgetAPI'
+                }, '*');
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.ChartWidgetAPI.init();
+
+            if (window.TradingView) {
+                initChart();
+            } else {
+                // Check periodically for library
+                const checkInterval = setInterval(() => {
+                    if (window.TradingView) {
+                        clearInterval(checkInterval);
+                        initChart();
+                    }
+                }, 100);
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (widget && widget.resize) {
+                widget.resize();
+            }
+        });
+        
+        // Cleanup on unload
+        window.addEventListener('beforeunload', () => {
+            if (widget) {
+                widget.remove();
+            }
+        });
+        
+        // Expose API globally for direct access
+        window.chartWidget = window.ChartWidgetAPI;
+    </script>
+</body>
+</html>

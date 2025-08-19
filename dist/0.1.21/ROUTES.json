@@ -1,0 +1,82 @@
+[
+    {
+        "title": "Home",
+        "path": "/"
+    },
+    {
+        "title": "How it Works",
+        "path": "/how-it-works"
+    },
+    {
+        "title": "For CyberSecurity Firms",
+        "path": "/partners"
+    },
+    {
+        "title": "For Developers",
+        "path": "/developers"
+    },
+    {
+        "title": "For Businesses",
+        "path": "/businesses"
+    },
+    {
+        "title": "For General Users",
+        "path": "/users"
+    },
+    {
+        "title": "About Us",
+        "path": "/about"
+    },
+    {
+        "title": "Blog",
+        "path": "/blog"
+    },
+    {
+        "title": "Contact",
+        "path": "/contact"
+    },
+    {
+        "title": "Verifier",
+        "path": "/verifier"
+    },
+    {
+        "title": "Verifier History",
+        "path": "/verifier/history/domain/:id"
+    },
+    {
+        "title": "Verifier History",
+        "path": "/verifier/history/agent/:id"
+    },
+    {
+        "title": "Blog Detail",
+        "path": "/blog/detail/:id"
+    },
+    {
+        "title": "Leaderboard",
+        "path": "/leaderboard"
+    },
+    {
+        "title": "Leaderboard Detail",
+        "path": "/leaderboard/detail/:id"
+    },
+    {
+        "title": "Agent Attestation",
+        "path": "/attest"
+    },
+    {
+        "title": "Agent Creation",
+        "path": "/agent/new"
+    },
+    {
+        "title": "Agent Settings",
+        "path": "/agent/settings/:id"  
+    },
+    {
+        "title": "Chart",
+        "path": "/chart"
+    },
+    {
+        "title": "Transaction Detail",
+        "path": "/tx/:id"
+    }
+]

@@ -1,0 +1,8 @@
+{
+    "data": {
+        "title": "TEE Technology Deep Dive: Intel SGX vs AWS Nitro",
+        "author": "Dr. Alex Kim",
+        "date": "2025-01-10",
+        "content": "A comprehensive comparison of Trusted Execution Environments and how TrustRoot leverages both for maximum security coverage.\n\nTrusted Execution Environments (TEEs) are at the heart of modern secure computing. As organizations seek to protect sensitive data and processes, understanding the strengths and limitations of leading TEE solutions is crucial. This article explores the differences between Intel SGX and AWS Nitro, two of the most widely used TEEs in the industry.\n\nBy leveraging both technologies, TrustRoot delivers a security architecture that is flexible, robust, and adaptable to a variety of use cases. We examine real-world scenarios, performance benchmarks, and integration strategies to help developers and enterprises make informed decisions. With the right TEE strategy, you can safeguard your applications against even the most advanced threats.\n"
+    }
+} 
