@@ -1,5 +1,5 @@
 ::: page-nav {"maxWidth":"1200px","margin":"1rem auto","width":"100%", "direction":"horizontal", "gap":"2rem"}
-  ::: page-link {"url": "/"}
+  ::: page-link {"url": ""}
     ::: page-image {"width":"32px", "height": "auto"}
     url: "/.assets/trustroot-logo.png"
     :::
